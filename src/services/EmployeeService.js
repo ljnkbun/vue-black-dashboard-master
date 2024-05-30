@@ -11,11 +11,19 @@ const configBearer = {
 };
 
 export default {
-  auth(payload) {
-    return api.post(`${resource}/login`, payload, config);
+  get() {
+    return api.get(`${resource}`, configBearer);
   },
-  logout(payload) {
-
-    return api.post(`${resource}/logout/${payload}`, null, configBearer);
+  getEmployee(employeeId) {
+    return api.get(`${resource}/${employeeId}`, configBearer);
+  },
+  saveEmployee(payload) {
+    return api.post(`${resource}`, payload, configBearer);
+  },
+  updateEmployee(employeeId, payload) {
+    return api.get(`${resource}/${employeeId}`, payload, configBearer);
+  },
+  delEmployee(employeeId) {
+    return api.get(`${resource}/${employeeId}`, configBearer);
   }
 }
