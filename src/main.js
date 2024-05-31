@@ -21,8 +21,15 @@ import router from "./router/index";
 import BlackDashboard from "./plugins/blackDashboard";
 import i18n from "./i18n";
 import "./registerServiceWorker";
+// import ToastPlugin from 'vue-toast-notification';
+// Import one of the available themes
+//import 'vue-toast-notification/dist/theme-default.css';
+import 'vue-toast-notification/dist/theme-bootstrap.css';
+
+
 Vue.use(BlackDashboard);
 Vue.use(VueRouter);
+// Vue.use(ToastPlugin);
 Vue.use(RouterPrefetch);
 new Vue({
   router,

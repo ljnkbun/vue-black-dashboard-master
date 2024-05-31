@@ -33,12 +33,18 @@
 </template>
 
 <script>
+import NotificationTemplate from "./Notifications/NotificationTemplate.vue";
+import { BaseAlert } from "../components";
 import { APIFactory } from "../services/APIFactory";
 const AuthService = APIFactory.get('auth');
 
 export default {
+  components: {
+    BaseAlert,
+  },
   data() {
     return {
+      type: ["", "info", "success", "warning", "danger"],
       usernameRegex: /^[A-Za-z][A-Za-z0-9_]{5,29}$/,
       passwordRegex: /^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{5,}$/,
 
@@ -61,22 +67,29 @@ export default {
       event.preventDefault();
       AuthService.auth({ Username: this.username.value, Password: this.password.value })
         .then(response => {
-          alert("Welcome " + this.username.value);
+          // this.$toast.open(`Welcome ${this.username.value}`)
           localStorage.setItem('userId', response.data.data.id)
           localStorage.setItem('token', response.data.data.token)
 
           this.$router.push({ name: 'dashboard', query: { redirect: '/dashboard' } });
+          this.notifyVue('top', 'right', `Welcome ${this.username.value}`)
         })
         .catch(error =>
-          alert(error.response.data.Message)
+          this.notifyVue('top', 'right', `${error.response.data.Message}`)
         );
-      // if (data.Succeeded) {
-      //   alert("login")
-      // } else {
-      //   alert("error")
-      // }
     },
-
+    notifyVue(verticalAlign, horizontalAlign, message) {
+      const color = Math.floor(Math.random() * 4 + 1);
+      this.$notify({
+        component: NotificationTemplate,
+        icon: "tim-icons icon-bell-55",
+        horizontalAlign: horizontalAlign,
+        verticalAlign: verticalAlign,
+        type: this.type[color],
+        timeout: 1000,
+        message: message
+      });
+    },
   },
 
   mounted() {

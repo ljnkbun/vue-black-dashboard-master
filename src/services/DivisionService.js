@@ -1,6 +1,6 @@
 import api from './APICommon.js';
 
-const resource = "/Employee";
+const resource = "/Division";
 
 export default {
   data() {
@@ -26,20 +26,20 @@ export default {
     else
       return api.get(`${resource}`, this.configBearer);
   },
-  getEmployee(employeeId) {
+  getDivision(divionId) {
     this.resetToken()
-    return api.get(`${resource}/${employeeId}`, this.configBearer);
+    return api.get(`${resource}/${divionId}`, this.configBearer);
   },
-  saveEmployee(payload) {
+  saveDivision(payload) {
     this.resetToken()
     return api.post(`${resource}`, payload, this.configBearer);
   },
-  updateEmployee(employeeId, payload) {
+  updateDivision(divionId, payload) {
     this.resetToken()
-    return api.get(`${resource}/${employeeId}`, payload, this.configBearer);
+    return api.get(`${resource}/${divionId}`, payload, this.configBearer);
   },
-  delEmployee(employeeId) {
+  delDivision(divionId) {
     this.resetToken()
-    return api.get(`${resource}/${employeeId}`, this.configBearer);
+    return api.get(`${resource}/${divionId}`, this.configBearer);
   }
 }

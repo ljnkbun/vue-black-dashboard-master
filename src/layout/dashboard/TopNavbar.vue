@@ -137,9 +137,11 @@ export default {
         .then(response => {
           if (response.data.data)
             this.$router.push({ name: 'login', query: { redirect: '/login' } });
+          else
+            alert("logout error");
         })
         .catch(error =>
-          alert(error.response.data.Message)
+          alert(error.response.data.message)
         );
     }
   },
