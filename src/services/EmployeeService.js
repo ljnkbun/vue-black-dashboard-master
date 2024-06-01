@@ -36,10 +36,10 @@ export default {
   },
   updateEmployee(employeeId, payload) {
     this.resetToken()
-    return api.get(`${resource}/${employeeId}`, payload, this.configBearer);
+    return api.put(`${resource}/${employeeId}`, payload, this.configBearer);
   },
   delEmployee(employeeId) {
     this.resetToken()
-    return api.get(`${resource}/${employeeId}`, this.configBearer);
+    return api.delete(`${resource}/${employeeId}`, this.configBearer);
   }
 }

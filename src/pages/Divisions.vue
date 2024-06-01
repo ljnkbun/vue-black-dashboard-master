@@ -9,8 +9,8 @@
                 <div class="form col-12">
                   <div class="row">
                     <div class="col-2">
-                      <input aria-label="Username" type="text" class="mr-2" ref="username" placeholder="Username"
-                        autofocus v-model="username.value" />
+                      <input aria-label="Code" type="text" class="mr-2" ref="code" placeholder="code" autofocus
+                        v-model="code.value" />
                     </div>
                     <div class="col-3">
                       <input type="submit" value="Search" class="action" @click="search()" />
@@ -30,7 +30,7 @@
         <div class="col-12">
           <div class="card">
             <div class="card-body">
-              <h5 class="card-title">Employees</h5>
+              <h5 class="card-title">Divisions</h5>
               <div class="table-full-width table-responsive">
                 <table class="table tablesorter table-hover">
                   <thead>
@@ -71,61 +71,39 @@
 
     <modal :show.sync="showModal" class="modal-search" id="searchModal" :centered="false" :show-close="true">
       <div class="modal-header">
-        <h1 class="text-dark">Employee Detail</h1>
+        <h1 class="text-dark">Division Detail</h1>
       </div>
       <div class="modal-body">
         <form>
           <div class="row">
             <div class="col-6">
               <label class="ml-1 mr-1 mt-1 mb-1">Code: </label>
-              <input type="text" class="ml-1 mr-1 mt-1 mb-1" v-model="employee.code" />
-              <input type="hidden" class="ml-1 mr-1 mt-1 mb-1" v-model="employee.id" />
+              <input type="text" class="ml-1 mr-1 mt-1 mb-1" v-model="division.code" />
+              <input type="hidden" class="ml-1 mr-1 mt-1 mb-1" v-model="division.id" />
             </div>
             <div class="col-6">
               <label class="ml-1 mr-1 mt-1 mb-1">Name: </label>
-              <input class="ml-1 mr-1 mt-1 mb-1" type="text" v-model="employee.name" />
+              <input class="ml-1 mr-1 mt-1 mb-1" type="text" v-model="division.name" />
             </div>
 
-          </div>
-          <div class="row">
-            <div class="col-6">
-              <label class="ml-1 mr-1 mt-1 mb-1">Username: </label>
-              <input type="text" class="ml-1 mr-1 mt-1 mb-1" v-model="employee.username" />
-            </div>
-            <div class="col-6">
-              <label class="ml-1 mr-1 mt-1 mb-1">Password: </label>
-              <input class="ml-1 mr-1 mt-1 mb-1" type="text" v-model="employee.password" />
-            </div>
-
-          </div>
-          <div class="row">
-            <div class="col-12">
-              <label class="ml-1 mr-1 mt-1 mb-1">Divisions: </label>
-              <select class="ml-1 mr-1 mt-1 mb-1" v-model="dividionSelected">
-                <option disabled value="">Please select one</option>
-                <option v-for="division in divisions" :value="division.id">
-                  {{ division.name }}
-                </option>
-              </select>
-            </div>
           </div>
         </form>
       </div>
       <div class="modal-footer">
         <div class="mt-2 mx-auto">
-          <button type="submit" class="btn btn-success ml-1 mr-1 mt-1 mb-1" @click="saveEmployee">Save</button>
+          <button type="submit" class="btn btn-success ml-1 mr-1 mt-1 mb-1" @click="saveDivision">Save</button>
           <button class="btn btn-secondary ml-1 mr-1 mt-1 mb-1" @click="showModal = false">Close</button>
         </div>
       </div>
     </modal>
     <modal :show.sync="showModalDel" class="modal-search" id="delConfirmed" :centered="false" :show-close="true">
       <div class="modal-header">
-        <h1 class="text-dark">Delete Employee</h1>
+        <h1 class="text-dark">Delete Division</h1>
       </div>
       <div class="modal-body">
         <form>
-          <h2 class="text-dark ">Do you sure to delete employee {{ employee.name }}???</h2>
-          <input type="hidden" class="ml-1 mr-1 mt-1 mb-1" v-model="employee.id" />
+          <h2 class="text-dark ">Do you sure to delete division {{ division.name }}???</h2>
+          <input type="hidden" class="ml-1 mr-1 mt-1 mb-1" v-model="division.id" />
         </form>
       </div>
       <div class="modal-footer">
@@ -142,7 +120,6 @@ import NotificationTemplate from "./Notifications/NotificationTemplate.vue";
 import { BaseAlert } from "../components";
 import Modal from "../components/Modal.vue";
 import { APIFactory } from "../services/APIFactory";
-const EmployeeService = APIFactory.get('employee');
 
 const DivisionService = APIFactory.get('division');
 
@@ -161,7 +138,7 @@ export default {
   },
   methods: {
     search() {
-      EmployeeService.get( `username=${this.username.value}` )
+      DivisionService.get(`code=${this.code.value}`)
         .then(response => {
           console.log(response)
           this.tableData = response.data.data
@@ -177,12 +154,11 @@ export default {
         });
     },
     initialize() {
-      EmployeeService.get()
+      DivisionService.get()
         .then(response => {
           console.log(response)
           this.tableData = response.data.data
           this.table.data = this.tableData
-          this.getDivisions()
         })
         .catch(error => {
           // this.$toast.open(`${error.response.data.Message}`)
@@ -193,24 +169,13 @@ export default {
           }
         });
     },
-    getDivisions(){
-      DivisionService.get()
-        .then(response => {
-          this.divisions = response.data.data
-        })
-        .catch(error => {
-          this.notifyVue('top', 'right', `${error.response.data.message}`)
-          if (error.response.data.message == 'Unauthorized') {
-            this.$router.push({ name: 'login', query: { redirect: '/login' } })
-          }
-        });
-    },
+
     editItem(item) {
       if (item) {
-        EmployeeService.getEmployee(item.id)
+        DivisionService.getDivision(item.id)
           .then(response => {
-            this.employee = response.data.data
-            this.dividionSelected = this.employee.divisionId
+            this.division = response.data.data
+            this.dividionSelected = this.division.divisionId
             this.showModal = true
           })
           .catch(error => {
@@ -220,19 +185,18 @@ export default {
             }
           });
       } else {
-        this.employee = {}
+        this.division = {}
         this.showModal = true
       }
     },
 
-    saveEmployee() {
-      console.log(this.employee)
-      if (this.employee && this.employee.id && this.employee.id != 0) {
-        this.employee.divisionId = this.dividionSelected
-        EmployeeService.updateEmployee(this.employee.id, this.employee)
+    saveDivision() {
+      console.log(this.division)
+      if (this.division && this.division.id && this.division.id != 0) {
+        DivisionService.updateDivision(this.division.id, this.division)
           .then(response => {
             console.log("update sucess")
-            this.notifyVue('top', 'right', "Updated Employee success!")
+            this.notifyVue('top', 'right', "Updated Division success!")
             this.showModal = false;
             this.initialize();
           })
@@ -244,11 +208,10 @@ export default {
           });
       } else {
         console.log("vao day")
-        this.employee.divisionId = this.dividionSelected
-        EmployeeService.saveEmployee(this.employee)
+        DivisionService.saveDivision(this.division)
           .then(response => {
             console.log("add sucess")
-            this.notifyVue('top', 'right', "Created Employee success!")
+            this.notifyVue('top', 'right', "Created Division success!")
             this.showModal = false;
             this.initialize();
           })
@@ -264,15 +227,15 @@ export default {
     confirmPopup(item) {
       console.log("confirmed");
       console.log(item);
-      this.employee = item;
+      this.division = item;
       this.showModalDel = true
     },
 
     delItem() {
       console.log("confirmed");
-      EmployeeService.delEmployee(this.employee.id)
+      DivisionService.delDivision(this.division.id)
         .then(response => {
-          this.notifyVue('top', 'right', "Deleted Employee success!")
+          this.notifyVue('top', 'right', "Deleted division success!")
           this.showModalDel = false;
           this.initialize();
         })
@@ -310,24 +273,21 @@ export default {
   data() {
     return {
       type: ["", "info", "success", "warning", "danger"],
-      username: {
+      code: {
         value: "",
         error: false
       },
 
       showModal: false,
       showModalDel: false,
-      employee: {},
-      dividionSelected: {},
-
-      divisions: [],
+      division: {},
 
       tableData: [
       ],
 
       table: {
         title: "Table on Plain Background",
-        columns: ["Name", "Username", "Password", "CreateDate", "CreateBy", "Action"],
+        columns: ["Code", "Name", "CreateDate", "CreateBy", "Action"],
         data: this.tableData,
       },
     };

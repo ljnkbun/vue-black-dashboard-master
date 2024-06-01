@@ -8,6 +8,11 @@
           icon="tim-icons icon-chart-pie-36"
         />
         <sidebar-link
+          to="/divisions"
+          :name="$t('sidebar.divisions')"
+          icon="tim-icons icon-istanbul"
+        />
+        <sidebar-link
           to="/employees"
           :name="$t('sidebar.employees')"
           icon="tim-icons icon-single-02"

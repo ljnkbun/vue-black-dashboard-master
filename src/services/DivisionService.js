@@ -36,10 +36,10 @@ export default {
   },
   updateDivision(divionId, payload) {
     this.resetToken()
-    return api.get(`${resource}/${divionId}`, payload, this.configBearer);
+    return api.put(`${resource}/${divionId}`, payload, this.configBearer);
   },
   delDivision(divionId) {
     this.resetToken()
-    return api.get(`${resource}/${divionId}`, this.configBearer);
+    return api.delete(`${resource}/${divionId}`, this.configBearer);
   }
 }
