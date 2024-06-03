@@ -7,6 +7,8 @@ const Login = () =>
 import(/* webpackChunkName: "login" */ "@/pages/Login.vue");
 const Dashboard = () =>
   import(/* webpackChunkName: "dashboard" */ "@/pages/Dashboard.vue");
+const Roles = () =>
+  import(/* webpackChunkName: "roles" */ "@/pages/Roles.vue");
 const Divisions = () =>
   import(/* webpackChunkName: "divisions" */ "@/pages/Divisions.vue");
 const Employees = () =>
@@ -40,6 +42,11 @@ const routes = [
         component: Dashboard,
       },
       {
+        path: "roles",
+        name: "roles",
+        component: Roles,
+      },
+      {
         path: "divisions",
         name: "divisions",
         component: Divisions,
@@ -48,6 +55,11 @@ const routes = [
         path: "employees",
         name: "employees",
         component: Employees,
+      },
+      {
+        path: "icons",
+        name: "icons",
+        component: Icons,
       },
     ],
   },

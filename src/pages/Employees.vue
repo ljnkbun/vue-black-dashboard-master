@@ -99,7 +99,7 @@
 
           </div>
           <div class="row">
-            <div class="col-12">
+            <div class="col-6">
               <label class="ml-1 mr-1 mt-1 mb-1">Divisions: </label>
               <select class="ml-1 mr-1 mt-1 mb-1" v-model="dividionSelected">
                 <option disabled value="">Please select one</option>
@@ -107,6 +107,23 @@
                   {{ division.name }}
                 </option>
               </select>
+            </div>
+            <div class="col-6">
+              <label class="ml-1 mr-1 mt-1 mb-1">Role: </label>
+              <!-- <select class="ml-1 mr-1 mt-1 mb-1" v-model="rolesSelected" multiple>
+                <option disabled value="">Please select</option>
+                <option v-for="role in roles" :value="role.id">
+                  {{ role.name }}
+                </option>
+              </select> -->
+              <multiselect v-model="rolesSelected" :options="roles" :multiple="true" :close-on-select="false"
+                :clear-on-select="false" :preserve-search="true" placeholder="Pick some" label="name" track-by="name"
+                :preselect-first="true">
+                <template #selection="{ values, search, isOpen }">
+                  <span class="multiselect__single" v-if="values.length" v-show="!isOpen">{{ values.length }} options
+                    selected</span>
+                </template>
+              </multiselect>
             </div>
           </div>
         </form>
@@ -118,6 +135,7 @@
         </div>
       </div>
     </modal>
+
     <modal :show.sync="showModalDel" class="modal-search" id="delConfirmed" :centered="false" :show-close="true">
       <div class="modal-header">
         <h1 class="text-dark">Delete Employee</h1>
@@ -135,21 +153,30 @@
         </div>
       </div>
     </modal>
+
+    <loader :is-visible="isLoading"></loader>
   </div>
 </template>
+
 <script>
 import NotificationTemplate from "./Notifications/NotificationTemplate.vue";
 import { BaseAlert } from "../components";
 import Modal from "../components/Modal.vue";
+import Multiselect from 'vue-multiselect';
 import { APIFactory } from "../services/APIFactory";
+import Loader from "../components/Loader.vue";
 const EmployeeService = APIFactory.get('employee');
 
 const DivisionService = APIFactory.get('division');
 
+const RoleService = APIFactory.get('role');
+
 export default {
   components: {
     Modal,
-    BaseAlert
+    BaseAlert,
+    Multiselect,
+    Loader
   },
   created() {
     // 1. Before the DOM has been set up
@@ -161,115 +188,165 @@ export default {
   },
   methods: {
     search() {
-      EmployeeService.get( `username=${this.username.value}` )
+
+      this.isLoading = true;
+      EmployeeService.get(`username=${this.username.value}`)
         .then(response => {
-          console.log(response)
           this.tableData = response.data.data
           this.table.data = this.tableData
+          this.isLoading = false;
         })
         .catch(error => {
-          // this.$toast.open(`${error.response.data.Message}`)
-          this.notifyVue('top', 'right', `${error.response.data.message}`)
-          console.log(error)
-          if (error.response.data.message == 'Unauthorized') {
-            this.$router.push({ name: 'login', query: { redirect: '/login' } })
+          if (error.response) {
+            this.notifyVue('top', 'right', `${error.response.data.message}`)
+            if (error.response.data.message == 'Unauthorized') {
+              this.$router.push({ name: 'login', query: { redirect: '/login' } })
+            }
           }
+
+          this.isLoading = false;
         });
     },
     initialize() {
+      this.isLoading = true;
       EmployeeService.get()
         .then(response => {
-          console.log(response)
           this.tableData = response.data.data
           this.table.data = this.tableData
           this.getDivisions()
         })
         .catch(error => {
-          // this.$toast.open(`${error.response.data.Message}`)
-          this.notifyVue('top', 'right', `${error.response.data.message}`)
-          console.log(error)
-          if (error.response.data.message == 'Unauthorized') {
-            this.$router.push({ name: 'login', query: { redirect: '/login' } })
+          if (error.response) {
+            this.notifyVue('top', 'right', `${error.response.data.message}`)
+            if (error.response.data.message == 'Unauthorized') {
+              this.$router.push({ name: 'login', query: { redirect: '/login' } })
+            }
           }
+
+          this.isLoading = false;
         });
     },
-    getDivisions(){
+    getDivisions() {
       DivisionService.get()
         .then(response => {
           this.divisions = response.data.data
+          this.getRoles()
         })
         .catch(error => {
-          this.notifyVue('top', 'right', `${error.response.data.message}`)
-          if (error.response.data.message == 'Unauthorized') {
-            this.$router.push({ name: 'login', query: { redirect: '/login' } })
+          if (error.response) {
+            this.notifyVue('top', 'right', `${error.response.data.message}`)
+            if (error.response.data.message == 'Unauthorized') {
+              this.$router.push({ name: 'login', query: { redirect: '/login' } })
+            }
           }
+
+          this.isLoading = false;
         });
     },
+
+    getRoles() {
+      RoleService.get()
+        .then(response => {
+          this.roles = response.data.data
+          this.isLoading = false;
+        })
+        .catch(error => {
+          if (error.response) {
+            this.notifyVue('top', 'right', `${error.response.data.message}`)
+            if (error.response.data.message == 'Unauthorized') {
+              this.$router.push({ name: 'login', query: { redirect: '/login' } })
+            }
+          }
+
+          this.isLoading = false;
+        });
+    },
+
     editItem(item) {
+
+      this.isLoading = true;
       if (item) {
         EmployeeService.getEmployee(item.id)
           .then(response => {
             this.employee = response.data.data
             this.dividionSelected = this.employee.divisionId
+
+            var rolessSelected = this.roles.filter(x => this.employee.roleIds.includes(x.id));
+            this.rolesSelected = rolessSelected
             this.showModal = true
+
+            this.isLoading = false;
           })
           .catch(error => {
-            this.notifyVue('top', 'right', `${error.response.data.message}`)
-            if (error.response.data.message == 'Unauthorized') {
-              this.$router.push({ name: 'login', query: { redirect: '/login' } })
+            if (error.response) {
+              this.notifyVue('top', 'right', `${error.response.data.message}`)
+              if (error.response.data.message == 'Unauthorized') {
+                this.$router.push({ name: 'login', query: { redirect: '/login' } })
+              }
             }
+            this.isLoading = false;
           });
       } else {
         this.employee = {}
+        this.dividionSelected = {}
+        this.rolesSelected = []
         this.showModal = true
+
+        this.isLoading = false;
       }
     },
 
     saveEmployee() {
-      console.log(this.employee)
+
+      this.isLoading = true;
+      var roleIdSelected = this.rolesSelected.map(x => x.id);
       if (this.employee && this.employee.id && this.employee.id != 0) {
         this.employee.divisionId = this.dividionSelected
+        this.employee.roleIds = roleIdSelected
         EmployeeService.updateEmployee(this.employee.id, this.employee)
           .then(response => {
-            console.log("update sucess")
             this.notifyVue('top', 'right', "Updated Employee success!")
             this.showModal = false;
             this.initialize();
           })
           .catch(error => {
-            this.notifyVue('top', 'right', `${error.response.data.message}`)
-            if (error.response.data.message == 'Unauthorized') {
-              this.$router.push({ name: 'login', query: { redirect: '/login' } })
+            if (error.response) {
+              this.notifyVue('top', 'right', `${error.response.data.message}`)
+              if (error.response.data.message == 'Unauthorized') {
+                this.$router.push({ name: 'login', query: { redirect: '/login' } })
+              }
             }
+            this.isLoading = false;
           });
       } else {
-        console.log("vao day")
         this.employee.divisionId = this.dividionSelected
+        this.employee.roleIds = roleIdSelected
         EmployeeService.saveEmployee(this.employee)
           .then(response => {
-            console.log("add sucess")
             this.notifyVue('top', 'right', "Created Employee success!")
             this.showModal = false;
             this.initialize();
           })
           .catch(error => {
-            this.notifyVue('top', 'right', `${error.response.data.message}`)
-            if (error.response.data.message == 'Unauthorized') {
-              this.$router.push({ name: 'login', query: { redirect: '/login' } })
+            if (error.response) {
+              this.notifyVue('top', 'right', `${error.response.data.message}`)
+              if (error.response.data.message == 'Unauthorized') {
+                this.$router.push({ name: 'login', query: { redirect: '/login' } })
+              }
             }
+            this.isLoading = false;
           });
       }
     },
 
     confirmPopup(item) {
-      console.log("confirmed");
-      console.log(item);
       this.employee = item;
       this.showModalDel = true
     },
 
     delItem() {
-      console.log("confirmed");
+
+      this.isLoading = true;
       EmployeeService.delEmployee(this.employee.id)
         .then(response => {
           this.notifyVue('top', 'right', "Deleted Employee success!")
@@ -277,10 +354,13 @@ export default {
           this.initialize();
         })
         .catch(error => {
-          this.notifyVue('top', 'right', `${error.response.data.message}`)
-          if (error.response.data.message == 'Unauthorized') {
-            this.$router.push({ name: 'login', query: { redirect: '/login' } })
+          if (error.response) {
+            this.notifyVue('top', 'right', `${error.response.data.message}`)
+            if (error.response.data.message == 'Unauthorized') {
+              this.$router.push({ name: 'login', query: { redirect: '/login' } })
+            }
           }
+          this.isLoading = false;
         }
         );
     },
@@ -315,12 +395,16 @@ export default {
         error: false
       },
 
+      isLoading: false,
       showModal: false,
       showModalDel: false,
       employee: {},
-      dividionSelected: {},
 
+      dividionSelected: {},
       divisions: [],
+
+      rolesSelected: [],
+      roles: [],
 
       tableData: [
       ],
@@ -334,6 +418,8 @@ export default {
   },
 };
 </script>
+
+<style src="vue-multiselect/dist/vue-multiselect.min.css"></style>
 <style lang="scss">
 @mixin box {
   box-shadow: 1px 1px 2px 1px #ccc;

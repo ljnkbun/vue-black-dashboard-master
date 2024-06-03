@@ -30,7 +30,7 @@
         <div class="col-12">
           <div class="card">
             <div class="card-body">
-              <h5 class="card-title">Divisions</h5>
+              <h5 class="card-title">Roles</h5>
               <div class="table-full-width table-responsive">
                 <table class="table tablesorter table-hover">
                   <thead>
@@ -71,19 +71,19 @@
 
     <modal :show.sync="showModal" class="modal-search" id="searchModal" :centered="false" :show-close="true">
       <div class="modal-header">
-        <h1 class="text-dark">Division Detail</h1>
+        <h1 class="text-dark">Role Detail</h1>
       </div>
       <div class="modal-body">
         <form>
           <div class="row">
             <div class="col-6">
               <label class="ml-1 mr-1 mt-1 mb-1">Code: </label>
-              <input type="text" class="ml-1 mr-1 mt-1 mb-1" v-model="division.code" />
-              <input type="hidden" class="ml-1 mr-1 mt-1 mb-1" v-model="division.id" />
+              <input type="text" class="ml-1 mr-1 mt-1 mb-1" v-model="role.code" />
+              <input type="hidden" class="ml-1 mr-1 mt-1 mb-1" v-model="role.id" />
             </div>
             <div class="col-6">
               <label class="ml-1 mr-1 mt-1 mb-1">Name: </label>
-              <input class="ml-1 mr-1 mt-1 mb-1" type="text" v-model="division.name" />
+              <input class="ml-1 mr-1 mt-1 mb-1" type="text" v-model="role.name" />
             </div>
 
           </div>
@@ -91,19 +91,19 @@
       </div>
       <div class="modal-footer">
         <div class="mt-2 mx-auto">
-          <button type="submit" class="btn btn-success ml-1 mr-1 mt-1 mb-1" @click="saveDivision">Save</button>
+          <button type="submit" class="btn btn-success ml-1 mr-1 mt-1 mb-1" @click="saveRole">Save</button>
           <button class="btn btn-secondary ml-1 mr-1 mt-1 mb-1" @click="showModal = false">Close</button>
         </div>
       </div>
     </modal>
     <modal :show.sync="showModalDel" class="modal-search" id="delConfirmed" :centered="false" :show-close="true">
       <div class="modal-header">
-        <h1 class="text-dark">Delete Division</h1>
+        <h1 class="text-dark">Delete Role</h1>
       </div>
       <div class="modal-body">
         <form>
-          <h2 class="text-dark ">Do you sure to delete division {{ division.name }}???</h2>
-          <input type="hidden" class="ml-1 mr-1 mt-1 mb-1" v-model="division.id" />
+          <h2 class="text-dark ">Do you sure to delete Role {{ role.name }}???</h2>
+          <input type="hidden" class="ml-1 mr-1 mt-1 mb-1" v-model="role.id" />
         </form>
       </div>
       <div class="modal-footer">
@@ -117,21 +117,20 @@
     <loader :is-visible="isLoading"></loader>
   </div>
 </template>
-
 <script>
 import NotificationTemplate from "./Notifications/NotificationTemplate.vue";
 import { BaseAlert } from "../components";
 import Modal from "../components/Modal.vue";
-import Loader from "../components/Loader.vue";
 import { APIFactory } from "../services/APIFactory";
+import Loader from "../components/Loader.vue";
 
-const DivisionService = APIFactory.get('division');
+const RoleService = APIFactory.get('role');
 
 export default {
   components: {
     Modal,
-    BaseAlert,
-    Loader
+    BaseAlert, Loader
+
   },
   created() {
     // 1. Before the DOM has been set up
@@ -143,11 +142,13 @@ export default {
   },
   methods: {
     search() {
+
       this.isLoading = true;
-      DivisionService.get(`code=${this.code.value}`)
+      RoleService.get(`code=${this.code.value}`)
         .then(response => {
           this.tableData = response.data.data
           this.table.data = this.tableData
+
           this.isLoading = false;
         })
         .catch(error => {
@@ -162,10 +163,11 @@ export default {
     },
     initialize() {
       this.isLoading = true;
-      DivisionService.get()
+      RoleService.get()
         .then(response => {
           this.tableData = response.data.data
           this.table.data = this.tableData
+
           this.isLoading = false;
         })
         .catch(error => {
@@ -175,17 +177,19 @@ export default {
               this.$router.push({ name: 'login', query: { redirect: '/login' } })
             }
           }
+
           this.isLoading = false;
         });
     },
 
     editItem(item) {
+
       this.isLoading = true;
       if (item) {
-        DivisionService.getDivision(item.id)
+        RoleService.getRole(item.id)
           .then(response => {
-            this.division = response.data.data
-            this.dividionSelected = this.division.divisionId
+            this.role = response.data.data
+            this.dividionSelected = this.role.roleId
             this.showModal = true
             this.isLoading = false;
           })
@@ -199,19 +203,19 @@ export default {
             this.isLoading = false;
           });
       } else {
-        this.division = {}
+        this.role = {}
         this.showModal = true
         this.isLoading = false;
       }
     },
 
-    saveDivision() {
+    saveRole() {
 
       this.isLoading = true;
-      if (this.division && this.division.id && this.division.id != 0) {
-        DivisionService.updateDivision(this.division.id, this.division)
+      if (this.role && this.role.id && this.role.id != 0) {
+        RoleService.updateRole(this.role.id, this.role)
           .then(response => {
-            this.notifyVue('top', 'right', "Updated Division success!")
+            this.notifyVue('top', 'right', "Updated Role success!")
             this.showModal = false;
             this.initialize();
           })
@@ -225,9 +229,9 @@ export default {
             this.isLoading = false;
           });
       } else {
-        DivisionService.saveDivision(this.division)
+        RoleService.saveRole(this.role)
           .then(response => {
-            this.notifyVue('top', 'right', "Created Division success!")
+            this.notifyVue('top', 'right', "Created Role success!")
             this.showModal = false;
             this.initialize();
           })
@@ -244,16 +248,16 @@ export default {
     },
 
     confirmPopup(item) {
-      this.division = item;
+      this.role = item;
       this.showModalDel = true
     },
 
     delItem() {
 
       this.isLoading = true;
-      DivisionService.delDivision(this.division.id)
+      RoleService.delRole(this.role.id)
         .then(response => {
-          this.notifyVue('top', 'right', "Deleted division success!")
+          this.notifyVue('top', 'right', "Deleted Role success!")
           this.showModalDel = false;
           this.initialize();
         })
@@ -302,7 +306,7 @@ export default {
       isLoading: false,
       showModal: false,
       showModalDel: false,
-      division: {},
+      role: {},
 
       tableData: [
       ],
