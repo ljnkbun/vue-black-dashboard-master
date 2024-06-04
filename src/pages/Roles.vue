@@ -13,10 +13,10 @@
                         v-model="code.value" />
                     </div>
                     <div class="col-3">
-                      <input type="submit" value="Search" class="action" @click="search()" />
+                      <button type="submit" class="btn btn-success action" @click="search()">SEARCH</button>
                     </div>
                     <div class="col-3">
-                      <button type="button" class="action" @click="editItem(null)">ADD</button>
+                      <button type="button" class="btn btn-primary action" @click="editItem(null)">ADD</button>
                     </div>
                   </div>
                 </div>
@@ -69,51 +69,9 @@
       </div>
     </div>
 
-    <modal :show.sync="showModal" class="modal-search" id="searchModal" :centered="false" :show-close="true">
-      <div class="modal-header">
-        <h1 class="text-dark">Role Detail</h1>
-      </div>
-      <div class="modal-body">
-        <form>
-          <div class="row">
-            <div class="col-6">
-              <label class="ml-1 mr-1 mt-1 mb-1">Code: </label>
-              <input type="text" class="ml-1 mr-1 mt-1 mb-1" v-model="role.code" />
-              <input type="hidden" class="ml-1 mr-1 mt-1 mb-1" v-model="role.id" />
-            </div>
-            <div class="col-6">
-              <label class="ml-1 mr-1 mt-1 mb-1">Name: </label>
-              <input class="ml-1 mr-1 mt-1 mb-1" type="text" v-model="role.name" />
-            </div>
-
-          </div>
-        </form>
-      </div>
-      <div class="modal-footer">
-        <div class="mt-2 mx-auto">
-          <button type="submit" class="btn btn-success ml-1 mr-1 mt-1 mb-1" @click="saveRole">Save</button>
-          <button class="btn btn-secondary ml-1 mr-1 mt-1 mb-1" @click="showModal = false">Close</button>
-        </div>
-      </div>
-    </modal>
-    <modal :show.sync="showModalDel" class="modal-search" id="delConfirmed" :centered="false" :show-close="true">
-      <div class="modal-header">
-        <h1 class="text-dark">Delete Role</h1>
-      </div>
-      <div class="modal-body">
-        <form>
-          <h2 class="text-dark ">Do you sure to delete Role {{ role.name }}???</h2>
-          <input type="hidden" class="ml-1 mr-1 mt-1 mb-1" v-model="role.id" />
-        </form>
-      </div>
-      <div class="modal-footer">
-        <div class="mt-2 mx-auto">
-          <button type="submit" class="btn btn-danger ml-1 mr-1 mt-1 mb-1" @click="delItem">Confirmed</button>
-          <button class="btn btn-secondary ml-1 mr-1 mt-1 mb-1" @click="showModalDel = false">Close</button>
-        </div>
-      </div>
-    </modal>
-
+    <RoleDetail :role="role" :showModal="showModal"></RoleDetail>
+   
+    <confirm-dialogue ref="confirmDialogue"></confirm-dialogue>
     <loader :is-visible="isLoading"></loader>
   </div>
 </template>
@@ -123,14 +81,17 @@ import { BaseAlert } from "../components";
 import Modal from "../components/Modal.vue";
 import { APIFactory } from "../services/APIFactory";
 import Loader from "../components/Loader.vue";
+import RoleDetail from "./RoleDetail.vue"
+import ConfirmDialogue from "./ConfirmDialogue.vue";
 
 const RoleService = APIFactory.get('role');
 
 export default {
   components: {
     Modal,
-    BaseAlert, Loader
-
+    BaseAlert, Loader,
+    RoleDetail,
+    ConfirmDialogue
   },
   created() {
     // 1. Before the DOM has been set up
@@ -183,7 +144,6 @@ export default {
     },
 
     editItem(item) {
-
       this.isLoading = true;
       if (item) {
         RoleService.getRole(item.id)
@@ -209,51 +169,20 @@ export default {
       }
     },
 
-    saveRole() {
-
-      this.isLoading = true;
-      if (this.role && this.role.id && this.role.id != 0) {
-        RoleService.updateRole(this.role.id, this.role)
-          .then(response => {
-            this.notifyVue('top', 'right', "Updated Role success!")
-            this.showModal = false;
-            this.initialize();
-          })
-          .catch(error => {
-            if (error.response) {
-              this.notifyVue('top', 'right', `${error.response.data.message}`)
-              if (error.response.data.message == 'Unauthorized') {
-                this.$router.push({ name: 'login', query: { redirect: '/login' } })
-              }
-            }
-            this.isLoading = false;
-          });
-      } else {
-        RoleService.saveRole(this.role)
-          .then(response => {
-            this.notifyVue('top', 'right', "Created Role success!")
-            this.showModal = false;
-            this.initialize();
-          })
-          .catch(error => {
-            if (error.response) {
-              this.notifyVue('top', 'right', `${error.response.data.message}`)
-              if (error.response.data.message == 'Unauthorized') {
-                this.$router.push({ name: 'login', query: { redirect: '/login' } })
-              }
-            }
-            this.isLoading = false;
-          });
+    async confirmPopup(item) {
+      this.role = item;
+      // this.showModalDel = true
+      const ok = await this.$refs.confirmDialogue.show({
+        title: 'Delete Role',
+        message: `Are you sure you want to delete ${this.role.name}? It cannot be undone.`,
+        okButton: 'Delete',
+      });
+      if (ok) {
+        this.delItem()
       }
     },
 
-    confirmPopup(item) {
-      this.role = item;
-      this.showModalDel = true
-    },
-
     delItem() {
-
       this.isLoading = true;
       RoleService.delRole(this.role.id)
         .then(response => {
@@ -285,11 +214,20 @@ export default {
         message: message
       });
     },
+
+    camelCase(str) {
+      // Using replace method with regEx
+      if (str)
+        return str.replace(/(?:^\w|[A-Z]|\b\w)/g, function (word, index) {
+          return index == 0 ? word.toLowerCase() : word.toUpperCase();
+        }).replace(/\s+/g, '')
+      return "";
+    },
     hasValue(item, column) {
-      return item[column.toString().toLowerCase()];
+      return item[this.camelCase(column)];
     },
     itemValue(item, column) {
-      return item[column.toLowerCase()];
+      return item[this.camelCase(column)];
     },
     isActionCol(column) {
       return column == "Action";
@@ -313,7 +251,7 @@ export default {
 
       table: {
         title: "Table on Plain Background",
-        columns: ["Code", "Name", "CreateDate", "CreateBy", "Action"],
+        columns: ["Code", "Name", "CreatedDate", "CreatedBy", "Action"],
         data: this.tableData,
       },
     };
@@ -344,13 +282,9 @@ input[type="text"] {
   text-transform: uppercase;
   margin-left: 2rem;
   margin-right: 2rem;
-  border-radius: 25px;
   border: none;
-  cursor: pointer;
-  background: green;
   margin-top: 20px;
   color: #fff;
   font-size: 1.2rem;
-  @include box;
 }
 </style>

@@ -13,10 +13,10 @@
                         autofocus v-model="username.value" />
                     </div>
                     <div class="col-3">
-                      <input type="submit" value="Search" class="action" @click="search()" />
+                      <input type="submit" value="Search" class="btn btn-success action" @click="search()" />
                     </div>
                     <div class="col-3">
-                      <button type="button" class="action" @click="editItem(null)">ADD</button>
+                      <button type="button" class="btn btn-success action" @click="editItem(null)">ADD</button>
                     </div>
                   </div>
                 </div>
@@ -69,90 +69,10 @@
       </div>
     </div>
 
-    <modal :show.sync="showModal" class="modal-search" id="searchModal" :centered="false" :show-close="true">
-      <div class="modal-header">
-        <h1 class="text-dark">Employee Detail</h1>
-      </div>
-      <div class="modal-body">
-        <form>
-          <div class="row">
-            <div class="col-6">
-              <label class="ml-1 mr-1 mt-1 mb-1">Code: </label>
-              <input type="text" class="ml-1 mr-1 mt-1 mb-1" v-model="employee.code" />
-              <input type="hidden" class="ml-1 mr-1 mt-1 mb-1" v-model="employee.id" />
-            </div>
-            <div class="col-6">
-              <label class="ml-1 mr-1 mt-1 mb-1">Name: </label>
-              <input class="ml-1 mr-1 mt-1 mb-1" type="text" v-model="employee.name" />
-            </div>
+    <EmployeeDetail :employee="employee" :divisions="divisions" :dividionSelected="dividionSelected"
+      :rolesSelected="rolesSelected" :roles="roles" :showModal="showModal"></EmployeeDetail>
 
-          </div>
-          <div class="row">
-            <div class="col-6">
-              <label class="ml-1 mr-1 mt-1 mb-1">Username: </label>
-              <input type="text" class="ml-1 mr-1 mt-1 mb-1" v-model="employee.username" />
-            </div>
-            <div class="col-6">
-              <label class="ml-1 mr-1 mt-1 mb-1">Password: </label>
-              <input class="ml-1 mr-1 mt-1 mb-1" type="text" v-model="employee.password" />
-            </div>
-
-          </div>
-          <div class="row">
-            <div class="col-6">
-              <label class="ml-1 mr-1 mt-1 mb-1">Divisions: </label>
-              <select class="ml-1 mr-1 mt-1 mb-1" v-model="dividionSelected">
-                <option disabled value="">Please select one</option>
-                <option v-for="division in divisions" :value="division.id">
-                  {{ division.name }}
-                </option>
-              </select>
-            </div>
-            <div class="col-6">
-              <label class="ml-1 mr-1 mt-1 mb-1">Role: </label>
-              <!-- <select class="ml-1 mr-1 mt-1 mb-1" v-model="rolesSelected" multiple>
-                <option disabled value="">Please select</option>
-                <option v-for="role in roles" :value="role.id">
-                  {{ role.name }}
-                </option>
-              </select> -->
-              <multiselect v-model="rolesSelected" :options="roles" :multiple="true" :close-on-select="false"
-                :clear-on-select="false" :preserve-search="true" placeholder="Pick some" label="name" track-by="name"
-                :preselect-first="true">
-                <template #selection="{ values, search, isOpen }">
-                  <span class="multiselect__single" v-if="values.length" v-show="!isOpen">{{ values.length }} options
-                    selected</span>
-                </template>
-              </multiselect>
-            </div>
-          </div>
-        </form>
-      </div>
-      <div class="modal-footer">
-        <div class="mt-2 mx-auto">
-          <button type="submit" class="btn btn-success ml-1 mr-1 mt-1 mb-1" @click="saveEmployee">Save</button>
-          <button class="btn btn-secondary ml-1 mr-1 mt-1 mb-1" @click="showModal = false">Close</button>
-        </div>
-      </div>
-    </modal>
-
-    <modal :show.sync="showModalDel" class="modal-search" id="delConfirmed" :centered="false" :show-close="true">
-      <div class="modal-header">
-        <h1 class="text-dark">Delete Employee</h1>
-      </div>
-      <div class="modal-body">
-        <form>
-          <h2 class="text-dark ">Do you sure to delete employee {{ employee.name }}???</h2>
-          <input type="hidden" class="ml-1 mr-1 mt-1 mb-1" v-model="employee.id" />
-        </form>
-      </div>
-      <div class="modal-footer">
-        <div class="mt-2 mx-auto">
-          <button type="submit" class="btn btn-danger ml-1 mr-1 mt-1 mb-1" @click="delItem">Confirmed</button>
-          <button class="btn btn-secondary ml-1 mr-1 mt-1 mb-1" @click="showModalDel = false">Close</button>
-        </div>
-      </div>
-    </modal>
+    <confirm-dialogue ref="confirmDialogue"></confirm-dialogue>
 
     <loader :is-visible="isLoading"></loader>
   </div>
@@ -160,11 +80,14 @@
 
 <script>
 import NotificationTemplate from "./Notifications/NotificationTemplate.vue";
+import EmployeeDetail from "./EmployeeDetail.vue";
 import { BaseAlert } from "../components";
 import Modal from "../components/Modal.vue";
 import Multiselect from 'vue-multiselect';
 import { APIFactory } from "../services/APIFactory";
 import Loader from "../components/Loader.vue";
+import ConfirmDialogue from "./ConfirmDialogue.vue";
+
 const EmployeeService = APIFactory.get('employee');
 
 const DivisionService = APIFactory.get('division');
@@ -176,7 +99,9 @@ export default {
     Modal,
     BaseAlert,
     Multiselect,
-    Loader
+    Loader,
+    EmployeeDetail,
+    ConfirmDialogue
   },
   created() {
     // 1. Before the DOM has been set up
@@ -296,56 +221,19 @@ export default {
       }
     },
 
-    saveEmployee() {
-
-      this.isLoading = true;
-      var roleIdSelected = this.rolesSelected.map(x => x.id);
-      if (this.employee && this.employee.id && this.employee.id != 0) {
-        this.employee.divisionId = this.dividionSelected
-        this.employee.roleIds = roleIdSelected
-        EmployeeService.updateEmployee(this.employee.id, this.employee)
-          .then(response => {
-            this.notifyVue('top', 'right', "Updated Employee success!")
-            this.showModal = false;
-            this.initialize();
-          })
-          .catch(error => {
-            if (error.response) {
-              this.notifyVue('top', 'right', `${error.response.data.message}`)
-              if (error.response.data.message == 'Unauthorized') {
-                this.$router.push({ name: 'login', query: { redirect: '/login' } })
-              }
-            }
-            this.isLoading = false;
-          });
-      } else {
-        this.employee.divisionId = this.dividionSelected
-        this.employee.roleIds = roleIdSelected
-        EmployeeService.saveEmployee(this.employee)
-          .then(response => {
-            this.notifyVue('top', 'right', "Created Employee success!")
-            this.showModal = false;
-            this.initialize();
-          })
-          .catch(error => {
-            if (error.response) {
-              this.notifyVue('top', 'right', `${error.response.data.message}`)
-              if (error.response.data.message == 'Unauthorized') {
-                this.$router.push({ name: 'login', query: { redirect: '/login' } })
-              }
-            }
-            this.isLoading = false;
-          });
+    async confirmPopup(item) {
+      this.employee = item;
+      const ok = await this.$refs.confirmDialogue.show({
+        title: 'Delete Employee',
+        message: `Are you sure you want to delete ${this.employee.name}? It cannot be undone.`,
+        okButton: 'Delete',
+      });
+      if (ok) {
+        this.delItem()
       }
     },
 
-    confirmPopup(item) {
-      this.employee = item;
-      this.showModalDel = true
-    },
-
     delItem() {
-
       this.isLoading = true;
       EmployeeService.delEmployee(this.employee.id)
         .then(response => {
@@ -377,11 +265,19 @@ export default {
         message: message
       });
     },
+    camelCase(str) {
+      // Using replace method with regEx
+      if (str)
+        return str.replace(/(?:^\w|[A-Z]|\b\w)/g, function (word, index) {
+          return index == 0 ? word.toLowerCase() : word.toUpperCase();
+        }).replace(/\s+/g, '')
+      return "";
+    },
     hasValue(item, column) {
-      return item[column.toString().toLowerCase()];
+      return item[this.camelCase(column)];
     },
     itemValue(item, column) {
-      return item[column.toLowerCase()];
+      return item[this.camelCase(column)];
     },
     isActionCol(column) {
       return column == "Action";
@@ -411,7 +307,7 @@ export default {
 
       table: {
         title: "Table on Plain Background",
-        columns: ["Name", "Username", "Password", "CreateDate", "CreateBy", "Action"],
+        columns: ["Name", "Username", "Password", "CreatedDate", "CreatedBy", "Action"],
         data: this.tableData,
       },
     };
@@ -439,18 +335,15 @@ input[type="text"] {
 }
 
 
+
 .action {
   height: 40px;
   text-transform: uppercase;
   margin-left: 2rem;
   margin-right: 2rem;
-  border-radius: 25px;
   border: none;
-  cursor: pointer;
-  background: green;
   margin-top: 20px;
   color: #fff;
   font-size: 1.2rem;
-  @include box;
 }
 </style>

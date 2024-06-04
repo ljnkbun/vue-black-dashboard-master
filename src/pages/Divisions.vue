@@ -13,10 +13,10 @@
                         v-model="code.value" />
                     </div>
                     <div class="col-3">
-                      <input type="submit" value="Search" class="action" @click="search()" />
+                      <input type="submit" value="Search" class="btn btn-success action" @click="search()" />
                     </div>
                     <div class="col-3">
-                      <button type="button" class="action" @click="editItem(null)">ADD</button>
+                      <button type="button" class="btn btn-success action" @click="editItem(null)">ADD</button>
                     </div>
                   </div>
                 </div>
@@ -69,50 +69,9 @@
       </div>
     </div>
 
-    <modal :show.sync="showModal" class="modal-search" id="searchModal" :centered="false" :show-close="true">
-      <div class="modal-header">
-        <h1 class="text-dark">Division Detail</h1>
-      </div>
-      <div class="modal-body">
-        <form>
-          <div class="row">
-            <div class="col-6">
-              <label class="ml-1 mr-1 mt-1 mb-1">Code: </label>
-              <input type="text" class="ml-1 mr-1 mt-1 mb-1" v-model="division.code" />
-              <input type="hidden" class="ml-1 mr-1 mt-1 mb-1" v-model="division.id" />
-            </div>
-            <div class="col-6">
-              <label class="ml-1 mr-1 mt-1 mb-1">Name: </label>
-              <input class="ml-1 mr-1 mt-1 mb-1" type="text" v-model="division.name" />
-            </div>
+    <DivisionDetail :division="division" :showModal="showModal"></DivisionDetail>
 
-          </div>
-        </form>
-      </div>
-      <div class="modal-footer">
-        <div class="mt-2 mx-auto">
-          <button type="submit" class="btn btn-success ml-1 mr-1 mt-1 mb-1" @click="saveDivision">Save</button>
-          <button class="btn btn-secondary ml-1 mr-1 mt-1 mb-1" @click="showModal = false">Close</button>
-        </div>
-      </div>
-    </modal>
-    <modal :show.sync="showModalDel" class="modal-search" id="delConfirmed" :centered="false" :show-close="true">
-      <div class="modal-header">
-        <h1 class="text-dark">Delete Division</h1>
-      </div>
-      <div class="modal-body">
-        <form>
-          <h2 class="text-dark ">Do you sure to delete division {{ division.name }}???</h2>
-          <input type="hidden" class="ml-1 mr-1 mt-1 mb-1" v-model="division.id" />
-        </form>
-      </div>
-      <div class="modal-footer">
-        <div class="mt-2 mx-auto">
-          <button type="submit" class="btn btn-danger ml-1 mr-1 mt-1 mb-1" @click="delItem">Confirmed</button>
-          <button class="btn btn-secondary ml-1 mr-1 mt-1 mb-1" @click="showModalDel = false">Close</button>
-        </div>
-      </div>
-    </modal>
+    <confirm-dialogue ref="confirmDialogue"></confirm-dialogue>
 
     <loader :is-visible="isLoading"></loader>
   </div>
@@ -124,6 +83,8 @@ import { BaseAlert } from "../components";
 import Modal from "../components/Modal.vue";
 import Loader from "../components/Loader.vue";
 import { APIFactory } from "../services/APIFactory";
+import DivisionDetail from "./DivisionDetail.vue";
+import ConfirmDialogue from "./ConfirmDialogue.vue";
 
 const DivisionService = APIFactory.get('division');
 
@@ -131,7 +92,9 @@ export default {
   components: {
     Modal,
     BaseAlert,
-    Loader
+    Loader,
+    DivisionDetail,
+    ConfirmDialogue
   },
   created() {
     // 1. Before the DOM has been set up
@@ -205,47 +168,16 @@ export default {
       }
     },
 
-    saveDivision() {
-
-      this.isLoading = true;
-      if (this.division && this.division.id && this.division.id != 0) {
-        DivisionService.updateDivision(this.division.id, this.division)
-          .then(response => {
-            this.notifyVue('top', 'right', "Updated Division success!")
-            this.showModal = false;
-            this.initialize();
-          })
-          .catch(error => {
-            if (error.response) {
-              this.notifyVue('top', 'right', `${error.response.data.message}`)
-              if (error.response.data.message == 'Unauthorized') {
-                this.$router.push({ name: 'login', query: { redirect: '/login' } })
-              }
-            }
-            this.isLoading = false;
-          });
-      } else {
-        DivisionService.saveDivision(this.division)
-          .then(response => {
-            this.notifyVue('top', 'right', "Created Division success!")
-            this.showModal = false;
-            this.initialize();
-          })
-          .catch(error => {
-            if (error.response) {
-              this.notifyVue('top', 'right', `${error.response.data.message}`)
-              if (error.response.data.message == 'Unauthorized') {
-                this.$router.push({ name: 'login', query: { redirect: '/login' } })
-              }
-            }
-            this.isLoading = false;
-          });
-      }
-    },
-
-    confirmPopup(item) {
+    async confirmPopup(item) {
       this.division = item;
-      this.showModalDel = true
+      const ok = await this.$refs.confirmDialogue.show({
+        title: 'Delete Division',
+        message: `Are you sure you want to delete ${this.division.name}? It cannot be undone.`,
+        okButton: 'Delete',
+      });
+      if (ok) {
+        this.delItem()
+      }
     },
 
     delItem() {
@@ -281,11 +213,19 @@ export default {
         message: message
       });
     },
+    camelCase(str) {
+      // Using replace method with regEx
+      if (str)
+        return str.replace(/(?:^\w|[A-Z]|\b\w)/g, function (word, index) {
+          return index == 0 ? word.toLowerCase() : word.toUpperCase();
+        }).replace(/\s+/g, '')
+      return "";
+    },
     hasValue(item, column) {
-      return item[column.toString().toLowerCase()];
+      return item[this.camelCase(column)];
     },
     itemValue(item, column) {
-      return item[column.toLowerCase()];
+      return item[this.camelCase(column)];
     },
     isActionCol(column) {
       return column == "Action";
@@ -309,7 +249,7 @@ export default {
 
       table: {
         title: "Table on Plain Background",
-        columns: ["Code", "Name", "CreateDate", "CreateBy", "Action"],
+        columns: ["Code", "Name", "CreatedDate", "CreatedBy", "Action"],
         data: this.tableData,
       },
     };
@@ -335,18 +275,15 @@ input[type="text"] {
 }
 
 
+
 .action {
   height: 40px;
   text-transform: uppercase;
   margin-left: 2rem;
   margin-right: 2rem;
-  border-radius: 25px;
   border: none;
-  cursor: pointer;
-  background: green;
   margin-top: 20px;
   color: #fff;
   font-size: 1.2rem;
-  @include box;
 }
 </style>
