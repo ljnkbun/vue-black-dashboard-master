@@ -62,6 +62,8 @@
                     </tr>
                   </tbody>
                 </table>
+                <pagination :totalPages="totalPages" :perPage="pageSize" :currentPage="currentPage" :total="totalCount"
+                  @pagechanged="onPageChange" />
               </div>
             </div>
           </div>
@@ -69,8 +71,9 @@
       </div>
     </div>
 
-    <RoleDetail :role="role" :showModal="showModal"></RoleDetail>
-   
+    <RoleDetail :role="detail.role" :showModal="detail.showModal" :controllerActions="detail.controllerActions"
+      @onClose="handleClose"></RoleDetail>
+
     <confirm-dialogue ref="confirmDialogue"></confirm-dialogue>
     <loader :is-visible="isLoading"></loader>
   </div>
@@ -83,15 +86,20 @@ import { APIFactory } from "../services/APIFactory";
 import Loader from "../components/Loader.vue";
 import RoleDetail from "./RoleDetail.vue"
 import ConfirmDialogue from "./ConfirmDialogue.vue";
+import Pagination from "../components/Pagination.vue";
 
 const RoleService = APIFactory.get('role');
+
+const ControllerActionService = APIFactory.get('controllerAction');
+
 
 export default {
   components: {
     Modal,
     BaseAlert, Loader,
     RoleDetail,
-    ConfirmDialogue
+    ConfirmDialogue,
+    Pagination
   },
   created() {
     // 1. Before the DOM has been set up
@@ -103,11 +111,13 @@ export default {
   },
   methods: {
     search() {
-
       this.isLoading = true;
-      RoleService.get(`code=${this.code.value}`)
+      RoleService.get(`code=${this.code.value}&PageNumber=${this.currentPage}`)
         .then(response => {
           this.tableData = response.data.data
+          this.totalPages = response.data.totalPage
+          this.pageSize = response.data.pageSize
+          this.totalCount = response.data.totalCount
           this.table.data = this.tableData
 
           this.isLoading = false;
@@ -127,8 +137,30 @@ export default {
       RoleService.get()
         .then(response => {
           this.tableData = response.data.data
+          this.totalPages = response.data.totalPage
+          this.pageSize = response.data.pageSize
+          this.totalCount = response.data.totalCount
           this.table.data = this.tableData
 
+          this.getControllerActions()
+        })
+        .catch(error => {
+          if (error.response) {
+            this.notifyVue('top', 'right', `${error.response.data.message}`)
+            if (error.response.data.message == 'Unauthorized') {
+              this.$router.push({ name: 'login', query: { redirect: '/login' } })
+            }
+          }
+
+          this.isLoading = false;
+        });
+    },
+
+    getControllerActions() {
+      ControllerActionService.get()
+        .then(response => {
+          this.detail.controllerActions = response.data.data
+          this.$store.commit('AddControllerAction', this.detail.controllerActions)
           this.isLoading = false;
         })
         .catch(error => {
@@ -143,15 +175,23 @@ export default {
         });
     },
 
+    onPageChange(page) {
+      console.log(page)
+      this.currentPage = page;
+      this.search();
+    },
+
     editItem(item) {
       this.isLoading = true;
       if (item) {
         RoleService.getRole(item.id)
           .then(response => {
-            this.role = response.data.data
-            this.dividionSelected = this.role.roleId
-            this.showModal = true
+            this.$store.commit('AddControllerAction', this.detail.controllerActions)
+            this.detail.role = response.data.data
+            this.dividionSelected = this.detail.role.roleId
+            this.detail.showModal = true
             this.isLoading = false;
+
           })
           .catch(error => {
             if (error.response) {
@@ -163,18 +203,17 @@ export default {
             this.isLoading = false;
           });
       } else {
-        this.role = {}
-        this.showModal = true
+        this.detail.role = {}
+        this.detail.showModal = true
         this.isLoading = false;
       }
     },
 
     async confirmPopup(item) {
-      this.role = item;
-      // this.showModalDel = true
+      this.detail.role = item;
       const ok = await this.$refs.confirmDialogue.show({
         title: 'Delete Role',
-        message: `Are you sure you want to delete ${this.role.name}? It cannot be undone.`,
+        message: `Are you sure you want to delete ${this.detail.role.name}? It cannot be undone.`,
         okButton: 'Delete',
       });
       if (ok) {
@@ -184,10 +223,9 @@ export default {
 
     delItem() {
       this.isLoading = true;
-      RoleService.delRole(this.role.id)
+      RoleService.delRole(this.detail.role.id)
         .then(response => {
           this.notifyVue('top', 'right', "Deleted Role success!")
-          this.showModalDel = false;
           this.initialize();
         })
         .catch(error => {
@@ -201,7 +239,9 @@ export default {
         }
         );
     },
-
+    handleClose() {
+      this.detail.showModal = false
+    },
     notifyVue(verticalAlign, horizontalAlign, message) {
       const color = Math.floor(Math.random() * 4 + 1);
       this.$notify({
@@ -241,10 +281,12 @@ export default {
         error: false
       },
 
+      detail: {
+        showModal: false,
+        role: {},
+        controllerActions: []
+      },
       isLoading: false,
-      showModal: false,
-      showModalDel: false,
-      role: {},
 
       tableData: [
       ],
@@ -254,6 +296,10 @@ export default {
         columns: ["Code", "Name", "CreatedDate", "CreatedBy", "Action"],
         data: this.tableData,
       },
+      currentPage: 1,
+      totalPages: 0,
+      pageSize: 10,
+      totalCount: 0
     };
   },
 };

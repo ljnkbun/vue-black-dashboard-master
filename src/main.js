@@ -25,14 +25,14 @@ import "./registerServiceWorker";
 // Import one of the available themes
 //import 'vue-toast-notification/dist/theme-default.css';
 import 'vue-toast-notification/dist/theme-bootstrap.css';
-
+import { store } from './store.js';
 
 Vue.use(BlackDashboard);
 Vue.use(VueRouter);
-// Vue.use(ToastPlugin);
 Vue.use(RouterPrefetch);
 new Vue({
   router,
   i18n,
+  store,
   render: (h) => h(App),
 }).$mount("#app");

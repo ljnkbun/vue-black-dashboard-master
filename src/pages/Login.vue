@@ -75,7 +75,7 @@ export default {
           this.notifyVue('top', 'right', `Welcome ${this.username.value}`)
         })
         .catch(error =>
-          this.notifyVue('top', 'right', `${error.response.data.Message}`)
+          this.notifyVue('top', 'right', `${error.response.data.message}`)
         );
     },
     notifyVue(verticalAlign, horizontalAlign, message) {

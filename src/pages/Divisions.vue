@@ -62,6 +62,8 @@
                     </tr>
                   </tbody>
                 </table>
+                <pagination :totalPages="totalPages" :perPage="pageSize" :currentPage="currentPage" :total="totalCount"
+                  @pagechanged="onPageChange" />
               </div>
             </div>
           </div>
@@ -85,6 +87,7 @@ import Loader from "../components/Loader.vue";
 import { APIFactory } from "../services/APIFactory";
 import DivisionDetail from "./DivisionDetail.vue";
 import ConfirmDialogue from "./ConfirmDialogue.vue";
+import Pagination from "../components/Pagination.vue";
 
 const DivisionService = APIFactory.get('division');
 
@@ -94,7 +97,8 @@ export default {
     BaseAlert,
     Loader,
     DivisionDetail,
-    ConfirmDialogue
+    ConfirmDialogue,
+    Pagination
   },
   created() {
     // 1. Before the DOM has been set up
@@ -111,6 +115,9 @@ export default {
         .then(response => {
           this.tableData = response.data.data
           this.table.data = this.tableData
+          this.totalPages = response.data.totalPage
+          this.pageSize = response.data.pageSize
+          this.totalCount = response.data.totalCount
           this.isLoading = false;
         })
         .catch(error => {
@@ -129,6 +136,9 @@ export default {
         .then(response => {
           this.tableData = response.data.data
           this.table.data = this.tableData
+          this.totalPages = response.data.totalPage
+          this.pageSize = response.data.pageSize
+          this.totalCount = response.data.totalCount
           this.isLoading = false;
         })
         .catch(error => {
@@ -140,6 +150,12 @@ export default {
           }
           this.isLoading = false;
         });
+    },
+
+    onPageChange(page) {
+      console.log(page)
+      this.currentPage = page;
+      this.search();
     },
 
     editItem(item) {
@@ -252,6 +268,10 @@ export default {
         columns: ["Code", "Name", "CreatedDate", "CreatedBy", "Action"],
         data: this.tableData,
       },
+      currentPage: 1,
+      totalPages: 0,
+      pageSize: 10,
+      totalCount:0
     };
   },
 };
