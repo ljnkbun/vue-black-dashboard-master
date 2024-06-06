@@ -81,7 +81,7 @@
         </div>
       </collapse-transition>
     </div>
-    <!-- <modal :show.sync="showUserModal" class="modal-search" id="userModal" :centered="false" :show-close="true">
+    <modal :show.sync="showUserModal" class="modal-search" id="userModal" :centered="false" :show-close="true">
       <div class="modal-header">
         <h1 class="text-dark">User Profile</h1>
       </div>
@@ -118,7 +118,7 @@
           <button class="btn btn-secondary ml-1 mr-1 mt-1 mb-1" @click="showUserModal = false">Close</button>
         </div>
       </div>
-    </modal> -->
+    </modal>
 
     <loader :is-visible="isLoading"></loader>
   </nav>
@@ -197,6 +197,11 @@ export default {
             this.notifyVue('top', 'right', `${error.response.data.message}`)
             if (error.response.data.message == 'Unauthorized') {
               this.$router.push({ name: 'login', query: { redirect: '/login' } })
+            }
+            if (error.response.data.message.includes('validation failures')) {
+              error.response.data.errors.forEach(element => {
+                this.notifyVue('top', 'right', `${element.message}`)
+              });
             }
           }
           this.isLoading = false;

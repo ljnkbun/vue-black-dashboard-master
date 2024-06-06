@@ -20,7 +20,7 @@
                 pattern="^[A-Za-z][A-Za-z0-9_]{7,29}$" class="w100" ref="username" placeholder="Username" autofocus
                 v-model="username.value" />
 
-              <input required aria-required="true" type="password" class="w100" placeholder="Password"
+              <input required aria-required="true" pattern="^[A-Za-z][A-Za-z0-9_]{7,29}$"  type="password" class="w100" placeholder="Password"
                 v-model="password.value" />
             </div>
 
@@ -156,7 +156,7 @@ input[type="password"] {
   height: 40px;
   text-transform: uppercase;
   border-radius: 25px;
-  width: 100%;
+  width: 75%;
   border: none;
   cursor: pointer;
   background: green;

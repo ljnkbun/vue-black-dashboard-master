@@ -235,6 +235,8 @@ export default {
         this.detail.employee = {}
         this.detail.dividionSelected = {}
         this.detail.rolesSelected = []
+        this.detail.divisions = this.divisions
+        this.detail.roles = this.roles
         this.detail.showModal = true
 
         this.isLoading = false;
