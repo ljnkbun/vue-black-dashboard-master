@@ -72,7 +72,7 @@
     </div>
 
     <RoleDetail :role="detail.role" :showModal="detail.showModal" :controllerActions="detail.controllerActions"
-      @onClose="handleClose"></RoleDetail>
+      :controllerActionsSelected="detail.controllerActionsSelected" @onClose="handleClose"></RoleDetail>
 
     <confirm-dialogue ref="confirmDialogue"></confirm-dialogue>
     <loader :is-visible="isLoading"></loader>
@@ -87,6 +87,7 @@ import Loader from "../components/Loader.vue";
 import RoleDetail from "./RoleDetail.vue"
 import ConfirmDialogue from "./ConfirmDialogue.vue";
 import Pagination from "../components/Pagination.vue";
+import { store } from '../store.js';
 
 const RoleService = APIFactory.get('role');
 
@@ -157,10 +158,10 @@ export default {
     },
 
     getControllerActions() {
-      ControllerActionService.get()
+      ControllerActionService.get('pageSize=-1')
         .then(response => {
           this.detail.controllerActions = response.data.data
-          this.$store.commit('AddControllerAction', this.detail.controllerActions)
+          store.dispatch('addControllerAction', this.detail.controllerActions)
           this.isLoading = false;
         })
         .catch(error => {
@@ -176,7 +177,6 @@ export default {
     },
 
     onPageChange(page) {
-      console.log(page)
       this.currentPage = page;
       this.search();
     },
@@ -186,8 +186,9 @@ export default {
       if (item) {
         RoleService.getRole(item.id)
           .then(response => {
-            this.$store.commit('AddControllerAction', this.detail.controllerActions)
+            store.dispatch('addControllerAction', this.detail.controllerActions)
             this.detail.role = response.data.data
+            this.detail.controllerActionsSelected = response.data.data.controllerActions
             this.dividionSelected = this.detail.role.roleId
             this.detail.showModal = true
             this.isLoading = false;
@@ -204,6 +205,7 @@ export default {
           });
       } else {
         this.detail.role = {}
+        this.detail.controllerActionsSelected = []
         this.detail.showModal = true
         this.isLoading = false;
       }
@@ -284,7 +286,8 @@ export default {
       detail: {
         showModal: false,
         role: {},
-        controllerActions: []
+        controllerActions: [],
+        controllerActionsSelected: []
       },
       isLoading: false,
 

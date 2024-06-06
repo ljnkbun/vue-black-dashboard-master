@@ -81,7 +81,7 @@
         </div>
       </collapse-transition>
     </div>
-    <modal :show.sync="showUserModal" class="modal-search" id="userModal" :centered="false" :show-close="true">
+    <!-- <modal :show.sync="showUserModal" class="modal-search" id="userModal" :centered="false" :show-close="true">
       <div class="modal-header">
         <h1 class="text-dark">User Profile</h1>
       </div>
@@ -118,7 +118,8 @@
           <button class="btn btn-secondary ml-1 mr-1 mt-1 mb-1" @click="showUserModal = false">Close</button>
         </div>
       </div>
-    </modal>
+    </modal> -->
+
     <loader :is-visible="isLoading"></loader>
   </nav>
 </template>
@@ -128,6 +129,7 @@ import { CollapseTransition } from "vue2-transitions";
 import Modal from "@/components/Modal";
 import { APIFactory } from "../../services/APIFactory";
 import Loader from "../../components/Loader.vue";
+import { store } from '../../store.js';
 const AuthService = APIFactory.get('auth');
 
 const EmployeeService = APIFactory.get('employee');
@@ -164,7 +166,7 @@ export default {
   methods: {
     editUser() {
       this.isLoading = true;
-      var userId = localStorage.getItem("userId");
+      var userId = store.getters.getUserId;
       EmployeeService.getEmployee(userId)
         .then(response => {
           this.employee = response.data.data
@@ -233,7 +235,9 @@ export default {
     },
     logout(event) {
       event.preventDefault();
-      var userId = localStorage.getItem('userId');
+      // var userId = localStorage.getItem('userId');
+
+      var userId = store.getters.getUserId;
       AuthService.logout(userId)
         .then(response => {
           if (response.data.data)

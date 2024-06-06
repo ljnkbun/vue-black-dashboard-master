@@ -1,4 +1,5 @@
 import api from './APICommon.js';
+import { store } from '../store.js';
 
 const resource = "/Auth";
 const config = {
@@ -13,7 +14,7 @@ export default {
     return api.post(`${resource}/login`, payload, config);
   },
   logout(payload) {
-    var token = localStorage.getItem('token')
+    var token = store.getters.getToken;
     var configBearer = {
       headers: {
         "Access-Control-Allow-Origin": "*",

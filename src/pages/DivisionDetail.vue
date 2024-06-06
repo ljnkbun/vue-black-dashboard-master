@@ -58,6 +58,11 @@ export default {
                             if (error.response.data.message == 'Unauthorized') {
                                 this.$router.push({ name: 'login', query: { redirect: '/login' } })
                             }
+                            if (error.response.data.message.includes('validation failures')) {
+                                error.response.data.errors.forEach(element => {
+                                    this.$parent.notifyVue('top', 'right', `${element.message}`)
+                                });
+                            }
                         }
                         this.$parent.isLoading = false;
                     });
@@ -69,10 +74,16 @@ export default {
                         this.$parent.initialize();
                     })
                     .catch(error => {
+                        console.log("vao day")
                         if (error.response) {
                             this.$parent.notifyVue('top', 'right', `${error.response.data.message}`)
                             if (error.response.data.message == 'Unauthorized') {
                                 this.$router.push({ name: 'login', query: { redirect: '/login' } })
+                            }
+                            if (error.response.data.message.includes('validation failures')) {
+                                error.response.data.errors.forEach(element => {
+                                    this.$parent.notifyVue('top', 'right', `${element.message}`)
+                                });
                             }
                         }
                         this.$parent.isLoading = false;
@@ -104,13 +115,13 @@ input[type="text"] {
 
 
 .action {
-  height: 40px;
-  text-transform: uppercase;
-  margin-left: 2rem;
-  margin-right: 2rem;
-  border: none;
-  margin-top: 20px;
-  color: #fff;
-  font-size: 1.2rem;
+    height: 40px;
+    text-transform: uppercase;
+    margin-left: 2rem;
+    margin-right: 2rem;
+    border: none;
+    margin-top: 20px;
+    color: #fff;
+    font-size: 1.2rem;
 }
 </style>

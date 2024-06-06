@@ -71,7 +71,7 @@
       </div>
     </div>
 
-    <DivisionDetail :division="division" :showModal="showModal"></DivisionDetail>
+    <DivisionDetail :division="division" :showModal="showModal"  ></DivisionDetail>
 
     <confirm-dialogue ref="confirmDialogue"></confirm-dialogue>
 
@@ -153,7 +153,6 @@ export default {
     },
 
     onPageChange(page) {
-      console.log(page)
       this.currentPage = page;
       this.search();
     },
@@ -202,7 +201,6 @@ export default {
       DivisionService.delDivision(this.division.id)
         .then(response => {
           this.notifyVue('top', 'right', "Deleted division success!")
-          this.showModalDel = false;
           this.initialize();
         })
         .catch(error => {
@@ -216,7 +214,6 @@ export default {
         }
         );
     },
-
     notifyVue(verticalAlign, horizontalAlign, message) {
       const color = Math.floor(Math.random() * 4 + 1);
       this.$notify({
@@ -257,7 +254,6 @@ export default {
 
       isLoading: false,
       showModal: false,
-      showModalDel: false,
       division: {},
 
       tableData: [

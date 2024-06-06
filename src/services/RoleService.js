@@ -1,4 +1,5 @@
 import api from './APICommon.js';
+import { store } from '../store.js';
 
 const resource = "/Role";
 
@@ -10,7 +11,7 @@ export default {
     }
   },
   resetToken() {
-    this.token = localStorage.getItem('token')
+    this.token = store.getters.getToken;
     this.configBearer = {
       headers: {
         "Access-Control-Allow-Origin": "*",

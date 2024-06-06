@@ -36,6 +36,8 @@
 import NotificationTemplate from "./Notifications/NotificationTemplate.vue";
 import { BaseAlert } from "../components";
 import { APIFactory } from "../services/APIFactory";
+
+import { store } from '../store.js';
 const AuthService = APIFactory.get('auth');
 
 export default {
@@ -67,9 +69,10 @@ export default {
       event.preventDefault();
       AuthService.auth({ Username: this.username.value, Password: this.password.value })
         .then(response => {
-          // this.$toast.open(`Welcome ${this.username.value}`)
-          localStorage.setItem('userId', response.data.data.id)
-          localStorage.setItem('token', response.data.data.token)
+          // localStorage.setItem('userId', response.data.data.id)
+          // localStorage.setItem('token', response.data.data.token)
+          store.dispatch('changeToken', response.data.data.token)
+          store.dispatch('changeUserId', response.data.data.id)
 
           this.$router.push({ name: 'dashboard', query: { redirect: '/dashboard' } });
           this.notifyVue('top', 'right', `Welcome ${this.username.value}`)

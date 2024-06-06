@@ -22,7 +22,7 @@
                         <label class="ml-1 mr-1 mt-1 mb-1">Role Action: </label>
                     </div>
                     <div class="col-12">
-                        <template v-for="item in controllerActionsDetail">
+                        <template v-for="item in controllerActions">
                             <ul>
                                 <li class="text-dark">
                                     <label class="checkbox">
@@ -53,20 +53,23 @@ import { APIFactory } from "../services/APIFactory";
 const RoleService = APIFactory.get('role');
 
 export default {
-    props: { role: {}, controllerActions: [], showModal: false },
+    props: { role: {}, controllerActions: [], showModal: false, controllerActionsSelected: [] },
     components: {
         Modal,
     },
     created() {
     },
     mounted() {
-        this.controllerActionsDetail = this.$store.state.controllerActions;
     },
     watch: {
-        controllerActionsDetail: {
+        controllerActions: {
             // We have to move our method to a handler field
             handler() {
-                console.log(this.controllerActionsDetail);
+            }
+        },
+        controllerActionsSelected: {
+            // We have to move our method to a handler field
+            handler() {
             }
         }
 
@@ -81,7 +84,7 @@ export default {
                 return 0;
             }
 
-            return this.controllerActionsDetail.sort(compare);
+            return this.controllerActions.sort(compare);
         }
     },
     methods: {
@@ -93,8 +96,8 @@ export default {
                 RoleService.updateRole(this.role.id, this.role)
                     .then(response => {
                         this.$parent.notifyVue('top', 'right', "Updated Role success!")
-                        this.closeModal();
                         this.$parent.initialize();
+                        this.closeModal();
                     })
                     .catch(error => {
                         if (error.response) {
@@ -102,16 +105,20 @@ export default {
                             if (error.response.data.message == 'Unauthorized') {
                                 this.$router.push({ name: 'login', query: { redirect: '/login' } })
                             }
+                            if (error.response.data.message.includes('validation failures')) {
+                                error.response.data.errors.forEach(element => {
+                                    this.$parent.notifyVue('top', 'right', `${element.message}`)
+                                });
+                            }
                         }
-                        this.$parent.isLoading = false;
                         this.closeModal();
                     });
             } else {
                 RoleService.saveRole(this.role)
                     .then(response => {
                         this.$parent.notifyVue('top', 'right', "Created Role success!")
-                        this.closeModal();
                         this.$parent.initialize();
+                        this.closeModal();
                     })
                     .catch(error => {
                         if (error.response) {
@@ -119,20 +126,19 @@ export default {
                             if (error.response.data.message == 'Unauthorized') {
                                 this.$router.push({ name: 'login', query: { redirect: '/login' } })
                             }
+                            if (error.response.data.message.includes('validation failures')) {
+                                error.response.data.errors.forEach(element => {
+                                    this.$parent.notifyVue('top', 'right', `${element.message}`)
+                                });
+                            }
                         }
-                        this.$parent.isLoading = false;
                         this.closeModal();
                     });
             }
         },
         closeModal() {
+            this.$parent.isLoading = false;
             this.$emit('onClose')
-        }
-    },
-    data() {
-        return {
-            controllerActionsDetail: [],
-            controllerActionsSelected: []
         }
     }
 };

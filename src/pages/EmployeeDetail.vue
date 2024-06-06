@@ -57,7 +57,7 @@
         <div class="modal-footer">
             <div class="mt-2 mx-auto">
                 <button type="submit" class="btn btn-success ml-1 mr-1 mt-1 mb-1" @click="saveEmployee">Save</button>
-                <button class="btn btn-secondary ml-1 mr-1 mt-1 mb-1" @click="showModal = false">Close</button>
+                <button class="btn btn-secondary ml-1 mr-1 mt-1 mb-1" @click="closeModal">Close</button>
             </div>
         </div>
     </modal>
@@ -71,43 +71,57 @@ import { APIFactory } from "../services/APIFactory";
 const EmployeeService = APIFactory.get('employee');
 
 export default {
-    props: { employee: {}, divisions: [], dividionSelected: {}, rolesSelected: {}, roles: [], showModal: false, isLoading: false },
+    props: { employee: {}, divisions: [], dividionSelected: {}, rolesSelected: {}, roles: [], showModal: false },
     components: {
         Modal,
         Multiselect,
+    },
+    watch: {
+        employee: {
+            // We have to move our method to a handler field
+            handler() {
+            }
+        },
+        roles: {
+            // We have to move our method to a handler field
+            handler() {
+            }
+        },
     },
     methods: {
         saveEmployee() {
             this.$parent.isLoading = true;
             var roleIdSelected = this.rolesSelected.map(x => x.id);
-            console.log(this.employee);
-            if (this.$parent.employee && this.$parent.employee.id && this.$parent.employee.id != 0) {
-                this.$parent.employee.divisionId = this.dividionSelected
-                this.$parent.employee.roleIds = roleIdSelected
-                EmployeeService.updateEmployee(this.$parent.employee.id, this.$parent.employee)
+            if (this.employee && this.employee.id && this.employee.id != 0) {
+                this.employee.divisionId = this.dividionSelected
+                this.employee.roleIds = roleIdSelected
+                EmployeeService.updateEmployee(this.employee.id, this.employee)
                     .then(response => {
                         this.$parent.notifyVue('top', 'right', "Updated Employee success!")
-                        this.$parent.showModal = false;
                         this.$parent.initialize();
+                        this.closeModal();
                     })
                     .catch(error => {
-
-                        console.log(error);
                         if (error.response) {
                             this.$parent.notifyVue('top', 'right', `${error.response.data.message}`)
                             if (error.response.data.message == 'Unauthorized') {
                                 this.$router.push({ name: 'login', query: { redirect: '/login' } })
                             }
+                            if (error.response.data.message.includes('validation failures')) {
+                                error.response.data.errors.forEach(element => {
+                                    this.$parent.notifyVue('top', 'right', `${element.message}`)
+                                });
+                            }
                         }
-                        this.$parent.isLoading = false;
+                        this.closeModal();
                     });
             } else {
-                this.$parent.employee.divisionId = this.dividionSelected
-                this.$parent.employee.roleIds = roleIdSelected
+                this.employee.divisionId = this.dividionSelected
+                this.employee.roleIds = roleIdSelected
                 EmployeeService.saveEmployee(this.employee)
                     .then(response => {
                         this.$parent.notifyVue('top', 'right', "Created Employee success!")
-                        this.$parent.showModal = false;
+                        this.closeModal();
                         this.$parent.initialize();
                     })
                     .catch(error => {
@@ -116,10 +130,20 @@ export default {
                             if (error.response.data.message == 'Unauthorized') {
                                 this.$router.push({ name: 'login', query: { redirect: '/login' } })
                             }
+                            if (error.response.data.message.includes('validation failures')) {
+                                error.response.data.errors.forEach(element => {
+                                    this.$parent.notifyVue('top', 'right', `${element.message}`)
+                                });
+                            }
                         }
-                        this.$parent.isLoading = false;
+                        this.closeModal();
                     });
             }
+        },
+
+        closeModal() {
+            this.$parent.isLoading = false;
+            this.$emit('onClose')
         }
     }
 };
@@ -147,13 +171,13 @@ input[type="text"] {
 
 
 .action {
-  height: 40px;
-  text-transform: uppercase;
-  margin-left: 2rem;
-  margin-right: 2rem;
-  border: none;
-  margin-top: 20px;
-  color: #fff;
-  font-size: 1.2rem;
+    height: 40px;
+    text-transform: uppercase;
+    margin-left: 2rem;
+    margin-right: 2rem;
+    border: none;
+    margin-top: 20px;
+    color: #fff;
+    font-size: 1.2rem;
 }
 </style>

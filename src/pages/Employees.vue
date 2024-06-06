@@ -71,8 +71,10 @@
       </div>
     </div>
 
-    <EmployeeDetail :employee="employee" :divisions="divisions" :dividionSelected="dividionSelected"
-      :rolesSelected="rolesSelected" :roles="roles" :showModal="showModal"></EmployeeDetail>
+    <EmployeeDetail :employee="detail.employee" :divisions="detail.divisions"
+      :dividionSelected="detail.dividionSelected" :rolesSelected="detail.rolesSelected" :roles="detail.roles"
+      :showModal="detail.showModal" @onClose="handleClose">
+    </EmployeeDetail>
 
     <confirm-dialogue ref="confirmDialogue"></confirm-dialogue>
 
@@ -198,7 +200,6 @@ export default {
     },
 
     onPageChange(page) {
-      console.log(page)
       this.currentPage = page;
       this.search();
     },
@@ -209,12 +210,15 @@ export default {
       if (item) {
         EmployeeService.getEmployee(item.id)
           .then(response => {
-            this.employee = response.data.data
-            this.dividionSelected = this.employee.divisionId
+            this.detail.employee = response.data.data
+            this.detail.dividionSelected = this.detail.employee.divisionId
 
-            var rolessSelected = this.roles.filter(x => this.employee.roleIds.includes(x.id));
-            this.rolesSelected = rolessSelected
-            this.showModal = true
+            this.detail.roles = this.roles
+            var rolessSelected = this.detail.roles.filter(x => this.detail.employee.roleIds.includes(x.id));
+            this.detail.rolesSelected = rolessSelected
+
+            this.detail.divisions = this.divisions
+            this.detail.showModal = true
 
             this.isLoading = false;
           })
@@ -228,20 +232,20 @@ export default {
             this.isLoading = false;
           });
       } else {
-        this.employee = {}
-        this.dividionSelected = {}
-        this.rolesSelected = []
-        this.showModal = true
+        this.detail.employee = {}
+        this.detail.dividionSelected = {}
+        this.detail.rolesSelected = []
+        this.detail.showModal = true
 
         this.isLoading = false;
       }
     },
 
     async confirmPopup(item) {
-      this.employee = item;
+      this.detail.employee = item;
       const ok = await this.$refs.confirmDialogue.show({
         title: 'Delete Employee',
-        message: `Are you sure you want to delete ${this.employee.name}? It cannot be undone.`,
+        message: `Are you sure you want to delete ${this.detail.employee.name}? It cannot be undone.`,
         okButton: 'Delete',
       });
       if (ok) {
@@ -251,10 +255,9 @@ export default {
 
     delItem() {
       this.isLoading = true;
-      EmployeeService.delEmployee(this.employee.id)
+      EmployeeService.delEmployee(this.detail.employee.id)
         .then(response => {
           this.notifyVue('top', 'right', "Deleted Employee success!")
-          this.showModalDel = false;
           this.initialize();
         })
         .catch(error => {
@@ -268,7 +271,9 @@ export default {
         }
         );
     },
-
+    handleClose() {
+      this.detail.showModal = false
+    },
     notifyVue(verticalAlign, horizontalAlign, message) {
       const color = Math.floor(Math.random() * 4 + 1);
       this.$notify({
@@ -308,15 +313,17 @@ export default {
       },
 
       isLoading: false,
-      showModal: false,
-      showModalDel: false,
-      employee: {},
-
-      dividionSelected: {},
       divisions: [],
-
-      rolesSelected: [],
       roles: [],
+      detail: {
+        employee: {},
+        divisions: [],
+        dividionSelected: {},
+
+        rolesSelected: [],
+        roles: [],
+        showModal: false,
+      },
 
       tableData: [
       ],
@@ -329,7 +336,7 @@ export default {
       currentPage: 1,
       totalPages: 0,
       pageSize: 10,
-      totalCount:0
+      totalCount: 0
     };
   },
 };
