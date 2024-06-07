@@ -111,7 +111,7 @@ export default {
   methods: {
     search() {
       this.isLoading = true;
-      DivisionService.get(`code=${this.code.value}`)
+      DivisionService.get(`code=${this.code.value}&PageNumber=${this.currentPage}`)
         .then(response => {
           this.tableData = response.data.data
           this.table.data = this.tableData

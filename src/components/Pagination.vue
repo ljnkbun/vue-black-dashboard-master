@@ -21,6 +21,7 @@ export default {
   },
   computed: {
     startPage() {
+
       // When on the first page
       if (this.currentPage === 1) {
         return 1;
@@ -28,7 +29,7 @@ export default {
 
       // When on the last page
       if (this.currentPage === this.totalPages) {
-        return this.totalPages - this.maxVisibleButtons;
+        return (this.totalPages - this.maxVisibleButtons) < 0 ? 1 : this.totalPages - this.maxVisibleButtons;
       }
 
       // When inbetween
@@ -36,7 +37,6 @@ export default {
     },
     pages() {
       const range = [];
-
       for (
         let i = this.startPage;
         i <= Math.min(this.startPage + this.maxVisibleButtons - 1, this.totalPages);
@@ -80,39 +80,24 @@ export default {
 };
 </script>
 <template>
-   <ul class="pagination">
+  <ul class="pagination">
     <li class="pagination-item">
-      <button
-        type="button"
-        @click="onClickFirstPage"
-        :disabled="isInFirstPage"
-      >
+      <button type="button" @click="onClickFirstPage" :disabled="isInFirstPage">
         First
       </button>
     </li>
 
     <li class="pagination-item">
-      <button
-        type="button"
-        @click="onClickPreviousPage"
-        :disabled="isInFirstPage"
-      >
+      <button type="button" @click="onClickPreviousPage" :disabled="isInFirstPage">
         Previous
       </button>
     </li>
 
     <!-- Visible Buttons Start -->
 
-    <li
-      v-for="page in pages"
-      class="pagination-item"
-    >
-      <button
-        type="button"
-        @click="onClickPage(page.name)"
-        :disabled="page.isDisabled"
-        :class="{ active: isPageActive(page.name) } "
-      >
+    <li v-for="page in pages" class="pagination-item">
+      <button type="button" @click="onClickPage(page.name)" :disabled="page.isDisabled"
+        :class="{ active: isPageActive(page.name) }">
         {{ page.name }}
       </button>
     </li>
@@ -120,21 +105,13 @@ export default {
     <!-- Visible Buttons End -->
 
     <li class="pagination-item">
-      <button
-        type="button"
-        @click="onClickNextPage"
-        :disabled="isInLastPage"
-      >
+      <button type="button" @click="onClickNextPage" :disabled="isInLastPage">
         Next
       </button>
     </li>
 
     <li class="pagination-item">
-      <button
-        type="button"
-        @click="onClickLastPage"
-        :disabled="isInLastPage"
-      >
+      <button type="button" @click="onClickLastPage" :disabled="isInLastPage">
         Last
       </button>
     </li>
